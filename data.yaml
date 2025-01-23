@@ -1,0 +1,7 @@
+names:
+- truck
+- bus
+- car
+nc: 3
+train: /home/bongo/porter_notebook/yolo/aihub/data_test/yolo_test/dataset/images/train
+val: /home/bongo/porter_notebook/yolo/aihub/data_test/yolo_test/dataset/images/valid
