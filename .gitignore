@@ -6,6 +6,10 @@
 *.JPG
 *.TXT
 *.XML
+*.mp4
+*.MP4
+*.csv
+*.CSV
 runs/
 *.pt
 *.cache
