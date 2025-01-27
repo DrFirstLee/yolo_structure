@@ -2,13 +2,14 @@
 # sudo docker run -it -p 8505:8888 anaconda-yolo
 # sudo docker run -it -p 8505:8888 -v /home/smartride/DrFirst:/app anaconda-yolo
 # sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -v /home/smartride/DrFirst:/app anaconda-yolo
-# sudo docker run -it --gpus all --shm-size=128g -p 8506:8888 -v ~/.ollama/models:/root/.ollama/models -v /home/smartride/DrFirst:/app anaconda-yolo
+### sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -v /usr/share/ollama/.ollama/models:/root/.ollama/models -v /home/smartride/DrFirst:/app anaconda-yolo
 FROM continuumio/anaconda3:latest
 
 # Working directory
 WORKDIR /app
 
 # Copy requirements.txt
+COPY ./models /root/.ollama/models
 COPY requirements.txt .
 
 # Install dependencies
@@ -48,4 +49,4 @@ EXPOSE 11434
 # Default command
 CMD service cron start && \
     jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root & \
-    ollama serve --port=11434
+    ollama serve
