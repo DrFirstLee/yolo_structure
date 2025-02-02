@@ -37,7 +37,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 STOP_THRESHOLD = 1  # 픽셀
 REVERSE_THRESHOLD = 1
 LANE_CHECK_FRAME = 5
-FAST = True
+MAKE_VIDEO = False
 moving_target_object_l = ['car','bus','truck','bicycle','motorcycle']
 detect_target_object_l = ['person','cow']
 
@@ -66,17 +66,17 @@ crop_save_dir = os.path.join(results_dir,"frame_img")
 
 video_unique = test_video_file.split('/')[-1].split('.')[0]
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-if FAST:
-    final_file_name = f"{video_unique}_fast_{current_time}.csv"
+if MAKE_VIDEO == False:
+    final_file_name = f"{video_unique}_{current_time}.csv"
     status_csv = os.path.join(results_dir,final_file_name)
-    output_path = f"{results_dir}/{video_unique}_fast_{current_time}.mp4"
+    output_path = f"{results_dir}/{video_unique}_{current_time}.mp4"
 else:
-    final_file_name = f"{video_unique}_llm_{current_time}.csv"
+    final_file_name = f"{video_unique}_video_{current_time}.csv"
     status_csv = os.path.join(results_dir,final_file_name)
-    output_path = f"{results_dir}/{video_unique}_llm_{current_time}.mp4"
+    output_path = f"{results_dir}/{video_unique}_video_{current_time}.mp4"
 with open(status_csv, mode="w", newline="") as file:
     writer = csv.writer(file)
-    writer.writerow(["datetime", "distance","event","detected", "source_name","frame_hash"])  # CSV 헤더 작성
+    writer.writerow(["datetime", "distance","event","detected", "source_name","frame_hash","frame_num"])  # CSV 헤더 작성
 
 
 # 비디오 읽기
@@ -110,45 +110,45 @@ while cap.isOpened():
         frame_num = 0
     if not ret:
         break
-    # if (frame_num >= LANE_CHECK_FRAME) and (frame_num <= LANE_CHECK_FRAME+10):
-    #     ## 레인 방향을 체크!!
-    #     encoded_frame = encode_image_to_base64(frame) 
-    #     res = ollama.chat(
-    #         model="llama3.2-vision:11b",
-    #         messages=[
-    #             {
-    #                 'role': 'user',
-    #                 'content': """I want to know the correct direction in which the vehicle is moving. 
-    #                 The answer should be simple words wold be only one of these 
-    #                 ["top to bottom," "bottom to top","left to right," "right to left," ]
-    #                 Please make the judgment based on the arrows on the road and the direction of the vehicle's movement.
-    #                 """,
-    #                 'images': [encoded_frame]
-    #             }
-    #         ]
-    #     )
-    #     reverse_direction =  res['message']['content']
-    #     if "RIGHTTOLEFT" in reverse_direction.replace(" ","").upper():
-    #         dir_res = "RIGHTTOLEFT"
-    #     elif "LEFTTORIGHT" in reverse_direction.replace(" ","").upper():
-    #         dir_res = "LEFTTORIGHT"
-    #     elif "TOPTOBOTTOM" in reverse_direction.replace(" ","").upper():
-    #         dir_res = "TOPTOBOTTOM"
-    #     elif "BOTTOMTOTOP" in reverse_direction.replace(" ","").upper():
-    #         dir_res = "BOTTOMTOTOP"
-    #     else:
-    #         dir_res = "ERROR"
+    if (frame_num >= LANE_CHECK_FRAME) and (frame_num <= LANE_CHECK_FRAME+10):
+        ## 레인 방향을 체크!!
+        encoded_frame = encode_image_to_base64(frame) 
+        res = ollama.chat(
+            model="llama3.2-vision:11b",
+            messages=[
+                {
+                    'role': 'user',
+                    'content': """I want to know the correct direction in which the vehicle is moving. 
+                    The answer should be simple words wold be only one of these 
+                    ["top to bottom," "bottom to top","left to right," "right to left," ]
+                    Please make the judgment based on the arrows on the road and the direction of the vehicle's movement.
+                    """,
+                    'images': [encoded_frame]
+                }
+            ]
+        )
+        reverse_direction =  res['message']['content']
+        if "RIGHTTOLEFT" in reverse_direction.replace(" ","").upper():
+            dir_res = "RIGHTTOLEFT"
+        elif "LEFTTORIGHT" in reverse_direction.replace(" ","").upper():
+            dir_res = "LEFTTORIGHT"
+        elif "TOPTOBOTTOM" in reverse_direction.replace(" ","").upper():
+            dir_res = "TOPTOBOTTOM"
+        elif "BOTTOMTOTOP" in reverse_direction.replace(" ","").upper():
+            dir_res = "BOTTOMTOTOP"
+        else:
+            dir_res = "ERROR"
 
-    #     reverse_direction_l.append(dir_res)
-    #     print(">>>>>>>>>>>>>>>>>>  ", dir_res)
+        reverse_direction_l.append(dir_res)
+        print(">>>>>>>>>>>>>>>>>>  ", dir_res)
 
-    # if frame_num == LANE_CHECK_FRAME+12:
-    #     counter = Counter(reverse_direction_l)
-    #     # 가장 많이 중복된 값 찾기
-    #     final_dir, count = counter.most_common(1)[0]
+    if frame_num == LANE_CHECK_FRAME+12:
+        counter = Counter(reverse_direction_l)
+        # 가장 많이 중복된 값 찾기
+        final_dir, count = counter.most_common(1)[0]
 
-    #     print(f"Final dir: {final_dir} (Count: {count})")
-    final_dir = "TOPTOBOTTOM"
+        print(f"Final dir: {final_dir} (Count: {count})")
+    # final_dir = "TOPTOBOTTOM"
     # YOLO 추적 수행
     results = model.track(frame, conf=0.5, show=False, tracker="bytetrack.yaml")
 
@@ -175,14 +175,12 @@ while cap.isOpened():
                         this_event = "STOP"
                         color = (255, 0, 0)  # 파란색
                         car_crop = frame[y1:y2, x1:x2]
-
                         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                        combined_string = f"{video_unique}_{this_event}_{current_time}"
-                        frame_unique_key = combined_string # hashlib.sha256(combined_string.encode()).hexdigest()    
-
-                        if FAST:
-                            final_class_name = class_name
-                            crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}.jpg")
+                        combined_string = f"{video_unique}_{this_event}_{track_id}"
+                        frame_unique_key = combined_string
+                        final_class_name = class_name + f" [{this_event}]"
+                        if MAKE_VIDEO == False:
+                            crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}_{str(frame_num)}.jpg")
                             cv2.imwrite(crop_filename, car_crop)
 
                         else:
@@ -204,8 +202,8 @@ while cap.isOpened():
                                 final_class_name = res['message']['content'].strip().upper().replace(".", "").replace(" ", "")
                                 print(">>>>>>>>>>> ", final_class_name)
                             else:
-                                final_class_name = class_name + f" [{this_event}]"
-
+                                1==1
+                        
                         label = f"{final_class_name} ID {track_id} ({confidence:.2f})"
                         label += f" [{this_event}]"
                         
@@ -213,7 +211,7 @@ while cap.isOpened():
 
                         with open(status_csv, mode="a", newline="") as file:
                             writer = csv.writer(file)
-                            writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
+                            writer.writerow([current_time,00,this_event, class_name, os.path.basename(test_video_file), frame_unique_key, frame_num])
 
                     elif  len(final_dir.replace(" ","").upper()) >5:
                         # 여기..위의 조건은 별로 의미 없기는 한데 아래를 하나의 IF 로 묶기위해서 함!
@@ -232,13 +230,12 @@ while cap.isOpened():
                             this_event = "REVERSE"
                             car_crop = frame[y1:y2, x1:x2]
                             current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                            combined_string = f"{video_unique}_{this_event}_{current_time}"
-                            # hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
-                            frame_unique_key = combined_string 
-
-                            if FAST:
+                            combined_string = f"{video_unique}_{this_event}_{track_id}"
+                            frame_unique_key = combined_string
+                            final_class_name = class_name + f" [{this_event}]"
+                            if MAKE_VIDEO == False:
                                 final_class_name = class_name
-                                crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}.jpg")
+                                crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}_{str(frame_num)}.jpg")
                                 cv2.imwrite(crop_filename, car_crop)  
 
 
@@ -266,7 +263,7 @@ while cap.isOpened():
                             color = (0, 0, 255)  # 빨간색
                             with open(status_csv, mode="a", newline="") as file:
                                 writer = csv.writer(file)
-                                writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
+                                writer.writerow([current_time,00,this_event, class_name, os.path.basename(test_video_file), frame_unique_key,frame_num])
 
                             label = f"{final_class_name}  ID {track_id} ({confidence:.2f})"
                             label += f" [{this_event}]"
@@ -287,12 +284,12 @@ while cap.isOpened():
                 final_class_name = class_name
                 color =  (255, 105, 180) # 핑크!!
                 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                combined_string = f"{video_unique}_{this_event}_{current_time}"
+                combined_string = f"{video_unique}_{this_event}_{track_id}"
                 # hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
                 frame_unique_key = combined_string 
                 with open(status_csv, mode="a", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
+                    writer.writerow([current_time,00,this_event, class_name, os.path.basename(test_video_file), frame_unique_key, frame_num])
 
                 label = f"{final_class_name} ({confidence:.2f})"
                 label += f" [{this_event}]"
