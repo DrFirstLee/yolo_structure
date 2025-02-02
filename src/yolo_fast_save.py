@@ -51,13 +51,19 @@ print(f"Using device: {model.device}")
 # 비디오 경로 설정
 video_path = os.path.join(origin_dir,"yolo_structure","test") 
 test_video_file = os.path.join(video_path,"traffic.mp4")
-# test_video_file = os.path.join(video_path,"fewers.mp4")
-test_video_file = os.path.join(video_path,"oneway.mp4")
-test_video_file = os.path.join(video_path,"korea.mp4")
-test_video_file = os.path.join(video_path,"cow.mp4")
+test_video_file = os.path.join(video_path,"fewers.mp4")
+# test_video_file = os.path.join(video_path,"oneway.mp4")
+# test_video_file = os.path.join(video_path,"korea.mp4")
+# test_video_file = os.path.join(video_path,"cow.mp4")
+
+
+
 
 ## 최종 저장경로 설정!!
 results_dir = os.path.join(origin_dir,"yolo_structure","results")
+## 사건파일저장
+crop_save_dir = os.path.join(results_dir,"frame_img") 
+
 video_unique = test_video_file.split('/')[-1].split('.')[0]
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 if FAST:
@@ -104,45 +110,45 @@ while cap.isOpened():
         frame_num = 0
     if not ret:
         break
-    if (frame_num >= LANE_CHECK_FRAME) and (frame_num <= LANE_CHECK_FRAME+10):
-        ## 레인 방향을 체크!!
-        encoded_frame = encode_image_to_base64(frame) 
-        res = ollama.chat(
-            model="llama3.2-vision:11b",
-            messages=[
-                {
-                    'role': 'user',
-                    'content': """I want to know the correct direction in which the vehicle is moving. 
-                    The answer should be simple words wold be only one of these 
-                    ["top to bottom," "bottom to top","left to right," "right to left," ]
-                    Please make the judgment based on the arrows on the road and the direction of the vehicle's movement.
-                    """,
-                    'images': [encoded_frame]
-                }
-            ]
-        )
-        reverse_direction =  res['message']['content']
-        if "RIGHTTOLEFT" in reverse_direction.replace(" ","").upper():
-            dir_res = "RIGHTTOLEFT"
-        elif "LEFTTORIGHT" in reverse_direction.replace(" ","").upper():
-            dir_res = "LEFTTORIGHT"
-        elif "TOPTOBOTTOM" in reverse_direction.replace(" ","").upper():
-            dir_res = "TOPTOBOTTOM"
-        elif "BOTTOMTOTOP" in reverse_direction.replace(" ","").upper():
-            dir_res = "BOTTOMTOTOP"
-        else:
-            dir_res = "ERROR"
+    # if (frame_num >= LANE_CHECK_FRAME) and (frame_num <= LANE_CHECK_FRAME+10):
+    #     ## 레인 방향을 체크!!
+    #     encoded_frame = encode_image_to_base64(frame) 
+    #     res = ollama.chat(
+    #         model="llama3.2-vision:11b",
+    #         messages=[
+    #             {
+    #                 'role': 'user',
+    #                 'content': """I want to know the correct direction in which the vehicle is moving. 
+    #                 The answer should be simple words wold be only one of these 
+    #                 ["top to bottom," "bottom to top","left to right," "right to left," ]
+    #                 Please make the judgment based on the arrows on the road and the direction of the vehicle's movement.
+    #                 """,
+    #                 'images': [encoded_frame]
+    #             }
+    #         ]
+    #     )
+    #     reverse_direction =  res['message']['content']
+    #     if "RIGHTTOLEFT" in reverse_direction.replace(" ","").upper():
+    #         dir_res = "RIGHTTOLEFT"
+    #     elif "LEFTTORIGHT" in reverse_direction.replace(" ","").upper():
+    #         dir_res = "LEFTTORIGHT"
+    #     elif "TOPTOBOTTOM" in reverse_direction.replace(" ","").upper():
+    #         dir_res = "TOPTOBOTTOM"
+    #     elif "BOTTOMTOTOP" in reverse_direction.replace(" ","").upper():
+    #         dir_res = "BOTTOMTOTOP"
+    #     else:
+    #         dir_res = "ERROR"
 
-        reverse_direction_l.append(dir_res)
-        print(">>>>>>>>>>>>>>>>>>  ", dir_res)
+    #     reverse_direction_l.append(dir_res)
+    #     print(">>>>>>>>>>>>>>>>>>  ", dir_res)
 
-    if frame_num == LANE_CHECK_FRAME+12:
-        counter = Counter(reverse_direction_l)
-        # 가장 많이 중복된 값 찾기
-        final_dir, count = counter.most_common(1)[0]
+    # if frame_num == LANE_CHECK_FRAME+12:
+    #     counter = Counter(reverse_direction_l)
+    #     # 가장 많이 중복된 값 찾기
+    #     final_dir, count = counter.most_common(1)[0]
 
-        print(f"Final dir: {final_dir} (Count: {count})")
-
+    #     print(f"Final dir: {final_dir} (Count: {count})")
+    final_dir = "TOPTOBOTTOM"
     # YOLO 추적 수행
     results = model.track(frame, conf=0.5, show=False, tracker="bytetrack.yaml")
 
@@ -168,12 +174,20 @@ while cap.isOpened():
                     if distance < STOP_THRESHOLD:  # 정지 상태
                         this_event = "STOP"
                         color = (255, 0, 0)  # 파란색
+                        car_crop = frame[y1:y2, x1:x2]
+
+                        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                        combined_string = f"{video_unique}_{this_event}_{current_time}"
+                        frame_unique_key = combined_string # hashlib.sha256(combined_string.encode()).hexdigest()    
+
                         if FAST:
                             final_class_name = class_name
+                            crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}.jpg")
+                            cv2.imwrite(crop_filename, car_crop)
+
                         else:
                             if class_name == "car":  # 'car' 클래스만 Ollama 호출                        
                                 ## DETECTING TYPE
-                                car_crop = frame[y1:y2, x1:x2]
                                 encoded_car_crop = encode_image_to_base64(car_crop)  # 이미지를 Base64로 인코딩
                                 # Ollama API 호출
                                 res = ollama.chat(
@@ -194,13 +208,12 @@ while cap.isOpened():
 
                         label = f"{final_class_name} ID {track_id} ({confidence:.2f})"
                         label += f" [{this_event}]"
-                        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                        combined_string = f"{frame}_{test_video_file}"
-                        hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
+                        
+
 
                         with open(status_csv, mode="a", newline="") as file:
                             writer = csv.writer(file)
-                            writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_num])
+                            writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
 
                     elif  len(final_dir.replace(" ","").upper()) >5:
                         # 여기..위의 조건은 별로 의미 없기는 한데 아래를 하나의 IF 로 묶기위해서 함!
@@ -217,12 +230,22 @@ while cap.isOpened():
 
                         if reverse_condition: # 조건이 맞으면!
                             this_event = "REVERSE"
+                            car_crop = frame[y1:y2, x1:x2]
+                            current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                            combined_string = f"{video_unique}_{this_event}_{current_time}"
+                            # hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
+                            frame_unique_key = combined_string 
+
                             if FAST:
                                 final_class_name = class_name
+                                crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}.jpg")
+                                cv2.imwrite(crop_filename, car_crop)  
+
+
                             else:
                                 if class_name == "car":  # 'car' 클래스만 Ollama 호출                        
                                     ## DETECTING TYPE
-                                    car_crop = frame[y1:y2, x1:x2]
+                                    
                                     encoded_car_crop = encode_image_to_base64(car_crop)  # 이미지를 Base64로 인코딩
                                     # Ollama API 호출
                                     res = ollama.chat(
@@ -241,12 +264,9 @@ while cap.isOpened():
                                     final_class_name = class_name + f" [{this_event}]"
 
                             color = (0, 0, 255)  # 빨간색
-                            combined_string = f"{frame}_{test_video_file}"
-                            hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
-
                             with open(status_csv, mode="a", newline="") as file:
                                 writer = csv.writer(file)
-                                writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_num])
+                                writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
 
                             label = f"{final_class_name}  ID {track_id} ({confidence:.2f})"
                             label += f" [{this_event}]"
@@ -266,12 +286,13 @@ while cap.isOpened():
                 this_event = class_name.upper()
                 final_class_name = class_name
                 color =  (255, 105, 180) # 핑크!!
-                combined_string = f"{frame}_{test_video_file}"
-                hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
-
+                current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                combined_string = f"{video_unique}_{this_event}_{current_time}"
+                # hashed_key = hashlib.sha256(combined_string.encode()).hexdigest()
+                frame_unique_key = combined_string 
                 with open(status_csv, mode="a", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_num])
+                    writer.writerow([current_time,00,this_event, final_class_name, os.path.basename(test_video_file), frame_unique_key])
 
                 label = f"{final_class_name} ({confidence:.2f})"
                 label += f" [{this_event}]"

@@ -2,13 +2,19 @@
 # sudo docker run -it -p 8505:8888 anaconda-yolo
 # sudo docker run -it -p 8505:8888 -v /home/smartride/DrFirst:/app anaconda-yolo
 # sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -v /home/smartride/DrFirst:/app anaconda-yolo
-# sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -v /usr/share/ollama/.ollama/models:/root/.ollama/models -v /home/smartride/DrFirst:/app anaconda-yolo
+# sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -p 8507:9997 -p 8508:9998 -v /home/smartride/DrFirst:/app anaconda-yolo
+### sudo docker run -it --gpus all --shm-size=128g -p 8505:8888 -v /usr/share/ollama/.ollama/models:/root/.ollama/models -v /home/smartride/DrFirst:/app anaconda-yolo
+## 도커네에 모델 넣기
+# 1. cp -r /usr/share/ollama/.ollama/models /home/smartride/DrFirst/yolo_structure/docker_setting/models 해서 모델을 우선 복사
+# 2. 그럼 토커파일에서 알아서  ./models /root/.ollama/models 일캐 복붙함!
+
 FROM continuumio/anaconda3:latest
 
 # Working directory
 WORKDIR /app
 
 # Copy requirements.txt
+COPY ./models /root/.ollama/models
 COPY requirements.txt .
 
 # Install dependencies
@@ -18,6 +24,10 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     nano \
     vim \
+    ffmpeg \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
     cron \
     && apt-get clean && \
     conda install -y -c conda-forge \
@@ -34,8 +44,13 @@ RUN apt-get update && apt-get install -y \
 # Ollama 설치
 RUN curl -fsSL https://ollama.com/install.sh | bash
 
+# Set timezone to Asia/Seoul
+RUN ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo "Asia/Seoul" > /etc/timezone
+
 # Llama 3.2 Vision 모델 다운로드
 # RUN ollama pull llama3.2-vision
+# RUN ollama pull deepseek-r1
 
 
 # Ensure cron runs in the background
