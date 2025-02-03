@@ -1,10 +1,10 @@
 names:
-- BUS
-- TRUCK
-- SEDAN
 - SUV
-- COMPACT_CAR
+- TRUCK
+- BUS
 - VAN
+- COMPACT_CAR
+- SEDAN
 nc: 6
 train: /app/yolo_structure/dataset/images/train
 val: /app/yolo_structure/dataset/images/valid

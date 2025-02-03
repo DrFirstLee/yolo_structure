@@ -70,3 +70,125 @@ EXPOSE 11434
 CMD service cron start && \
     jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root & \
     ollama serve
+
+
+
+
+
+==========
+# Base image
+FROM continuumio/anaconda3:latest
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and models
+COPY ./models /root/.ollama/models
+COPY requirements.txt .
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    build-essential \
+    cmake \
+    git \
+    libgl1 \
+    libxrender1 \
+    libxext6 \
+    nano \
+    vim \
+    ffmpeg \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools \
+    libegl1-mesa-dev \
+    libgstreamer1.0-dev \
+    libgtk-3-dev \
+    libv4l-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    libopenexr-dev \
+    libhdf5-dev \
+    libgflags-dev \
+    cron \
+    libgtk2.0-dev \
+    hdf5-tools \
+    libhdf5-serial-dev \
+    libgstreamer-plugins-base1.0-dev \
+    openjdk-17-jdk \
+    wget \
+    && apt-get clean
+
+# 환경 변수 설정
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Install Python dependencies
+RUN conda install -y -c conda-forge \
+    opencv \
+    openjpeg=2.5 \
+    matplotlib \
+    && pip install -r requirements.txt \
+    && conda clean -a -y
+
+
+# RUN ls -l /usr/lib/x86_64-linux-gnu/libopenjp2.a || echo "libopenjp2.a not found!"
+# Install CMake separately to ensure it's available
+RUN apt-get install -y cmake
+
+
+RUN git clone https://github.com/gflags/gflags.git && \
+    cd gflags && mkdir build && cd build && \
+    cmake .. && make -j$(nproc) && make install
+
+RUN apt-get install -y libopenjp2-7-dev
+
+RUN git clone --depth=1 https://github.com/gflags/gflags.git && \
+    cd gflags && \
+    cmake . && \
+    make && \
+    make install
+
+# Download and build OpenCV with GStreamer support
+RUN git clone --depth=1 https://github.com/opencv/opencv.git && \
+    git clone --depth=1 https://github.com/opencv/opencv_contrib.git && \
+    mkdir -p opencv/build && cd opencv/build && \
+    cmake -D CMAKE_BUILD_TYPE=Release \
+          -D CMAKE_INSTALL_PREFIX=/usr/local \
+          -D WITH_GSTREAMER=ON \
+          -D OPENCV_EXTRA_MODULES_PATH=/app/opencv_contrib/modules \
+          -D WITH_FFMPEG=ON \
+          -D GFLAGS_INCLUDE_DIR=/usr/include \
+          -D GFLAGS_LIBRARY=/usr/lib/x86_64-linux-gnu/libgflags.so \
+          -D CMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu \
+          -D BUILD_EXAMPLES=OFF .. && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    cd /app && rm -rf opencv opencv_contrib
+
+# # Set timezone to Asia/Seoul
+RUN ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo "Asia/Seoul" > /etc/timezone
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | bash
+
+# Ensure cron runs in the background
+RUN mkdir -p /var/log && touch /var/log/cron.log
+
+# Expose ports
+EXPOSE 8888
+EXPOSE 11434
+
+# Use JSON format for CMD to avoid OS signal issues
+CMD ["bash", "-c", "service cron start && \
+    jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root & \
+    ollama serve"]

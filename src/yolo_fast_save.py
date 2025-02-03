@@ -39,7 +39,7 @@ REVERSE_THRESHOLD = 1
 LANE_CHECK_FRAME = 5
 MAKE_VIDEO = False
 moving_target_object_l = ['car','bus','truck','bicycle','motorcycle']
-detect_target_object_l = ['person','cow']
+detect_target_object_l = ['person','cow'] # 'traffic light'
 
 
 # YOLO 모델 로드 및 디바이스 설정
@@ -55,7 +55,7 @@ test_video_file = os.path.join(video_path,"fewers.mp4")
 # test_video_file = os.path.join(video_path,"oneway.mp4")
 # test_video_file = os.path.join(video_path,"korea.mp4")
 # test_video_file = os.path.join(video_path,"cow.mp4")
-
+test_video_file = os.path.join(video_path,"korea_long.mp4")
 
 
 
