@@ -5,9 +5,11 @@ Korea Road Traffic Corporation CCTV Detection Program
 
 ## Project Result
 
-| Origin image   | Detected by YOLO   | Detailed analysis via VLM  | 
-| ![person](images/img1.png)    | ![person](images/img1.png) | ![man walking](images/img2.png) |
-| ![person](images/img1.png)    | ![car](images/img1.png) | ![SUV](images/img2.png) |
+| Origin Image   | Detected by YOLO   | Detailed Analysis via VLM  | 
+|---------------|-------------------|----------------------------|
+| ![person](images/img1.png) | ![person](images/img2.png) | ![man walking](images/img3.png) |
+| ![car](images/img4.png)    | ![car](images/img5.png)    | ![SUV](images/img6.png)        |
+
 
 
 ## Objective
