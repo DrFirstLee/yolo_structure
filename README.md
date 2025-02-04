@@ -35,6 +35,14 @@ Korea Road Traffic Corporation CCTV Detection Program
 ## How to Run code
 To set up this project, clone the repository:
 
+### Setting Up the Container Environment
+
+When creating the container environment, you must copy the **LLaMA 3.2-Vision** model downloaded from the **Ollama** server along with it.
+```bash
+/usr/share/ollama/.ollama/models:/root/.ollama/models
+```
+
+After building your Container image, allocate a **GPU** and at least **128GB of memory** before running the container.
 ```bash
 sudo docker run -it --gpus all --shm-size=128g -p 8505:8888
 ```
