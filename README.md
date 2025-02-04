@@ -15,12 +15,13 @@ Korea Road Traffic Corporation CCTV Detection Program
 ## Key Features
 - Real-time object detection from CCTV footage
 - Detection of emergency situations such as people, stationary vehicles, and moving objects
-- Use of YOLO for initial detection and VLM for status recognition
+- YOLO detects objects quickly on a per-frame basis.
+- If further analysis of detected objects is required, an API calls the VLM (deployed within a container) to retrieve detailed metadata about the object's status.
 - Integration with Kafka for event transmission and processing
   
 ## Model Used
 - [llama3.2-vision](https://ollama.com/library/llama3.2-vision)
-- [Ultralytics YOLO11.py](https://docs.ultralytics.com/models/yolo11/)
+- [Ultralytics YOLO11.pt](https://docs.ultralytics.com/models/yolo11/)
 
 ## How to Run code
 To set up this project, clone the repository:
@@ -40,17 +41,24 @@ This command will:
 
 Once the container is running, open a web browser and navigate to:
 
-http://localhost:8505
+http://{your_IP}:8505
 
 This will give you access to the Jupyter Notebook interface, where you can run the detection scripts.
 
 ### 4. Usage
 
-1. Prepare your CCTV footage data.
+1. Prepare your CCTV footage data.  
+   - The input data can be either an **MP4 video file** or a **real-time streaming source** in the format:  
+     `rtsp://<your-stream-url>.stream`
+
 2. Run the object detection script:
 
 ```bash
+# for streaming
 python /app/yolo_structure/src/yolo_fast_stream.py
+
+# for video file
+python /app/yolo_structure/src/yolo_fast_save.py
 ```
 
 3. The final processed event will be transmitted to Kafka.
