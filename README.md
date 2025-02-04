@@ -39,7 +39,7 @@ To set up this project, clone the repository:
 
 When creating the container environment, you must copy the **LLaMA 3.2-Vision** model downloaded from the **Ollama** server along with it.
 ```bash
-/usr/share/ollama/.ollama/models:/root/.ollama/models
+cp -r /usr/share/ollama/.ollama/models ./yolo_structure/docker_setting/models
 ```
 
 After building your Container image, allocate a **GPU** and at least **128GB of memory** before running the container.
