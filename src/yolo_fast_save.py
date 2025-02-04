@@ -56,7 +56,7 @@ test_video_file = os.path.join(video_path,"fewers.mp4")
 # test_video_file = os.path.join(video_path,"korea.mp4")
 # test_video_file = os.path.join(video_path,"cow.mp4")
 test_video_file = os.path.join(video_path,"korea_long.mp4")
-
+test_video_file = os.path.join(video_path,"dancing.mp4")
 
 
 ## 최종 저장경로 설정!!
@@ -290,6 +290,12 @@ while cap.isOpened():
                 with open(status_csv, mode="a", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow([current_time,00,this_event, class_name, os.path.basename(test_video_file), frame_unique_key, frame_num])
+
+                crop_target = frame[y1:y2, x1:x2]
+  
+                if MAKE_VIDEO == False:
+                    crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}_{str(frame_num)}.jpg")
+                    cv2.imwrite(crop_filename, crop_target)  
 
                 label = f"{final_class_name} ({confidence:.2f})"
                 label += f" [{this_event}]"
