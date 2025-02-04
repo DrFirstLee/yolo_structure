@@ -17,10 +17,35 @@ The goal of this project is to detect various emergency situations in real-time,
 - Use of YOLO for initial detection and VLM for status recognition
 - Integration with Kafka for event transmission and processing
 
-## Installation
-
+## How to Run code
 To set up this project, clone the repository:
 
 ```bash
-git clone https://github.com/your-repository-url.git
+sudo docker run -it --gpus all --shm-size=128g -p 8505:8888
 ```
+
+This command will:
+
+- Use all available GPUs (`--gpus all`).
+- Allocate 128GB of shared memory (`--shm-size=128g`).
+- Expose port `8505` for access to the Jupyter Notebook interface.
+- Mount the local `/home/smartride/DrFirst` directory to `/app` in the container for seamless file access.
+
+### 3. Access Jupyter Notebook
+
+Once the container is running, open a web browser and navigate to:
+
+http://localhost:8505
+
+This will give you access to the Jupyter Notebook interface, where you can run the detection scripts.
+
+### 4. Usage
+
+1. Prepare your CCTV footage data.
+2. Run the object detection script:
+
+```bash
+python /app/yolo_structure/src/yolo_fast_stream.py
+```
+
+3. The final processed event will be transmitted to Kafka.
