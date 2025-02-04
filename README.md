@@ -3,6 +3,14 @@
 ## Project Name
 Korea Road Traffic Corporation CCTV Detection Program
 
+## Project Result
+
+| Detected by YOLO   | Detailed analysis via VLM  | 
+|---------|---------|
+| ![person](images/img1.png) | ![man walking](images/img2.png) |
+| ![car](images/img1.png) | ![SUV](images/img2.png) |
+
+
 ## Objective
 - The goal of this project is to detect various emergency situations in real-time, such as people, stationary vehicles, fallen objects, and moving objects, based on CCTV video footage of roads.
 - Additionally, the system not only detects objects but also analyzes their specific status to provide a more detailed understanding of the situation.
