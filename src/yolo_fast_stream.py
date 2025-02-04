@@ -291,6 +291,13 @@ while cap.isOpened():
                     writer = csv.writer(file)
                     writer.writerow([current_time,00,this_event, class_name, os.path.basename(test_video_file), frame_unique_key, frame_num])
 
+
+                crop_target = frame[y1:y2, x1:x2]
+  
+                if MAKE_VIDEO == False:
+                    crop_filename = os.path.join(crop_save_dir, f"{frame_unique_key}_{str(frame_num)}.jpg")
+                    cv2.imwrite(crop_filename, crop_target)  
+
                 label = f"{final_class_name} ({confidence:.2f})"
                 label += f" [{this_event}]"
             # 경계 상자와 라벨 그리기
