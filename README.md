@@ -8,7 +8,7 @@ Korea Road Traffic Corporation CCTV Detection Program
 | Origin Image   | Detected by YOLO   | Detailed Analysis via VLM  | 
 |---------------|-------------------|----------------------------|
 | ![person](images/img1.png) | ![person](images/img2.png) | ![man walking](images/img3.png) |
-| ![origin iamge](results/origin_frame_shot.PNG)    | ![car](results/frame_shot.PNG)   | ![The VAN stopped](results/frame_img/cctv001_STOP_1_1095.jpg) \n The VAN stopped       |
+| ![origin iamge](results/origin_frame_shot.PNG)    | ![car](results/frame_shot.PNG)   | ![The VAN stopped](results/frame_img/cctv001_STOP_1_1095.jpg) <br> The vehicle type of this car is a VAN.      |
 
 
 
