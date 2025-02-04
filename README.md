@@ -16,6 +16,10 @@ The goal of this project is to detect various emergency situations in real-time,
 - Detection of emergency situations such as people, stationary vehicles, and moving objects
 - Use of YOLO for initial detection and VLM for status recognition
 - Integration with Kafka for event transmission and processing
+  
+## Model Used
+- [llama3.2-vision](https://ollama.com/library/llama3.2-vision)
+- [Ultralytics YOLO11.py](https://docs.ultralytics.com/models/yolo11/)
 
 ## How to Run code
 To set up this project, clone the repository:
