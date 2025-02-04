@@ -7,7 +7,7 @@ Korea Road Traffic Corporation CCTV Detection Program
 
 | Origin Image   | Detected by YOLO   | Detailed Analysis via VLM  | 
 |---------------|-------------------|----------------------------|
-| ![person](results/origin_frame_dancing.PNG) | ![person](results/frame_dancing.PNG) | ![man walking](results/frame_img/dancing_PERSON_2_20.jpg) <br> he person appears to be shopping or browsing through a store, possibly looking at items on shelves or displays. |
+| ![person](results/origin_frame_dancing.PNG) | ![person](results/frame_dancing.PNG) | ![man walking](results/frame_img/dancing_PERSON_2_20.jpg) <br> The person appears to be shopping or browsing through a store, possibly looking at items on shelves or displays. |
 | ![origin iamge](results/origin_frame_shot.PNG)    | ![car](results/frame_shot.PNG)   | ![The VAN stopped](results/frame_img/cctv001_STOP_1_1095.jpg) <br> The vehicle type of this car is a VAN.      |
 
 
